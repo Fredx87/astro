@@ -1,4 +1,5 @@
 import opts from 'astro:react:opts';
+import customServerRender from 'astro:react:custom-server-render';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
 import { incrementId } from './context.js';
@@ -101,9 +102,8 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
 		formState,
 	};
 	let html;
-	if (opts.experimentalCustomServerRender) {
-		const { default: renderFunction }= await import(opts.experimentalCustomServerRender);
-		html = await renderFunction(vnode, this);
+	if (opts.hasExperimentalCustomServerRender) {
+		html = await customServerRender(vnode, renderOptions);
 	} else if (opts.experimentalDisableStreaming) {
 		html = ReactDOM.renderToString(vnode);
 	} else if ('renderToReadableStream' in ReactDOM) {

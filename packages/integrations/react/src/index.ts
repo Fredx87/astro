@@ -34,11 +34,11 @@ function getRenderer(reactConfig: ReactVersionConfig) {
 function optionsPlugin({
 	experimentalReactChildren = false,
 	experimentalDisableStreaming = false,
-	experimentalCustomServerRender = null,
+	hasExperimentalCustomServerRender = false,
 }: {
 	experimentalReactChildren: boolean;
 	experimentalDisableStreaming: boolean;
-	experimentalCustomServerRender: string | null;
+	hasExperimentalCustomServerRender: boolean;
 }): vite.Plugin {
 	const virtualModule = 'astro:react:opts';
 	const virtualModuleId = '\0' + virtualModule;
@@ -55,8 +55,28 @@ function optionsPlugin({
 					code: `export default {
 						experimentalReactChildren: ${JSON.stringify(experimentalReactChildren)},
 						experimentalDisableStreaming: ${JSON.stringify(experimentalDisableStreaming)},
-						experimentalCustomServerRender: ${JSON.stringify(experimentalCustomServerRender)},
+						hasExperimentalCustomServerRender: ${JSON.stringify(hasExperimentalCustomServerRender)},
 					}`,
+				};
+			}
+		},
+	};
+}
+
+function customServerRenderPlugin(customServerRender: string): vite.Plugin {
+	const virtualModule = 'astro:react:custom-server-render';
+	const virtualModuleId = '\0' + virtualModule;
+	return {
+		name: '@astrojs/react:custom-server-render',
+		resolveId(id) {
+			if (id === virtualModule) {
+				return virtualModuleId;
+			}
+		},
+		load(id) {
+			if (id === virtualModuleId) {
+				return {
+					code: customServerRender,
 				};
 			}
 		},
@@ -84,8 +104,9 @@ function getViteConfiguration(
 			optionsPlugin({
 				experimentalReactChildren: !!experimentalReactChildren,
 				experimentalDisableStreaming: !!experimentalDisableStreaming,
-				experimentalCustomServerRender: experimentalCustomServerRender || null,
+				hasExperimentalCustomServerRender: !!experimentalCustomServerRender,
 			}),
+			customServerRenderPlugin(experimentalCustomServerRender || 'export default function customServerRender() {}'),
 		],
 		ssr: {
 			noExternal: [
