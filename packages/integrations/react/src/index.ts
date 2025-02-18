@@ -18,6 +18,7 @@ export type ReactIntegrationOptions = Pick<
 	 * Disable streaming in React components
 	 */
 	experimentalDisableStreaming?: boolean;
+	experimentalCustomServerRender?: string;
 };
 
 const FAST_REFRESH_PREAMBLE = react.preambleCode;
@@ -33,9 +34,11 @@ function getRenderer(reactConfig: ReactVersionConfig) {
 function optionsPlugin({
 	experimentalReactChildren = false,
 	experimentalDisableStreaming = false,
+	experimentalCustomServerRender = null,
 }: {
 	experimentalReactChildren: boolean;
 	experimentalDisableStreaming: boolean;
+	experimentalCustomServerRender: string | null;
 }): vite.Plugin {
 	const virtualModule = 'astro:react:opts';
 	const virtualModuleId = '\0' + virtualModule;
@@ -51,7 +54,8 @@ function optionsPlugin({
 				return {
 					code: `export default {
 						experimentalReactChildren: ${JSON.stringify(experimentalReactChildren)},
-						experimentalDisableStreaming: ${JSON.stringify(experimentalDisableStreaming)}
+						experimentalDisableStreaming: ${JSON.stringify(experimentalDisableStreaming)},
+						experimentalCustomServerRender: ${JSON.stringify(experimentalCustomServerRender)},
 					}`,
 				};
 			}
@@ -66,6 +70,7 @@ function getViteConfiguration(
 		babel,
 		experimentalReactChildren,
 		experimentalDisableStreaming,
+		experimentalCustomServerRender,
 	}: ReactIntegrationOptions = {},
 	reactConfig: ReactVersionConfig,
 ) {
@@ -79,6 +84,7 @@ function getViteConfiguration(
 			optionsPlugin({
 				experimentalReactChildren: !!experimentalReactChildren,
 				experimentalDisableStreaming: !!experimentalDisableStreaming,
+				experimentalCustomServerRender: experimentalCustomServerRender || null,
 			}),
 		],
 		ssr: {
@@ -100,6 +106,7 @@ export default function ({
 	babel,
 	experimentalReactChildren,
 	experimentalDisableStreaming,
+	experimentalCustomServerRender,
 }: ReactIntegrationOptions = {}): AstroIntegration {
 	const majorVersion = getReactMajorVersion();
 	if (isUnsupportedVersion(majorVersion)) {
@@ -114,7 +121,7 @@ export default function ({
 				addRenderer(getRenderer(versionConfig));
 				updateConfig({
 					vite: getViteConfiguration(
-						{ include, exclude, babel, experimentalReactChildren, experimentalDisableStreaming },
+						{ include, exclude, babel, experimentalReactChildren, experimentalDisableStreaming, experimentalCustomServerRender },
 						versionConfig,
 					),
 				});

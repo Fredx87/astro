@@ -101,7 +101,10 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
 		formState,
 	};
 	let html;
-	if (opts.experimentalDisableStreaming) {
+	if (opts.experimentalCustomServerRender) {
+		const { default: renderFunction }= await import(opts.experimentalCustomServerRender);
+		html = await renderFunction(vnode, this);
+	} else if (opts.experimentalDisableStreaming) {
 		html = ReactDOM.renderToString(vnode);
 	} else if ('renderToReadableStream' in ReactDOM) {
 		html = await renderToReadableStreamAsync(vnode, renderOptions);
